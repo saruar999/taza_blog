@@ -1,0 +1,57 @@
+# do NOT track Python compilation files
+*.py[cod]
+__python__/*
+
+# do NOT track tox's testing folder
+.tox
+
+# do NOT track coverage files/folders
+.coverage
+coverage_html
+
+# do NOT track compiled language files
+*.mo
+*.pot
+
+# I started relying on putting temporary notes into TODO files
+*.todo
+
+*.travis.yml
+.vscode
+
+# ignore the static files but not the directory itself.
+static/*
+
+
+# ignore the .env file for development and production and allow only the .env.example file.
+.env
+.env.development
+.env.production
+
+# ignore the vritual environment folder.
+venv
+emails
+
+# Ignore .idea
+.idea/dataSources.local.xml
+.idea/dataSources.xml
+.idea/
+.idea/misc.xml
+.idea/card-houzz-api.iml
+
+# User-specific stuff:
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+# Sensitive or high-churn files:
+.idea/dataSources.ids
+.idea/sqlDataSources.xml
+.idea/dynamic.xml
+.idea/uiDesigner.xml
+
+
+media_watcher.log
+system_log_error_log.log
+model_log_error_log.log
