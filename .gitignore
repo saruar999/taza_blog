@@ -25,12 +25,15 @@ static/*
 
 # ignore the .env file for development and production and allow only the .env.example file.
 .env
-.env.development
-.env.production
 
 # ignore the vritual environment folder.
 venv
+
+# ignore email folder
 emails
+
+*.sqlite3
+*.sqlite
 
 # Ignore .idea
 .idea/dataSources.local.xml
@@ -51,7 +54,3 @@ emails
 .idea/dynamic.xml
 .idea/uiDesigner.xml
 
-
-media_watcher.log
-system_log_error_log.log
-model_log_error_log.log
