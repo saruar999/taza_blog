@@ -58,8 +58,7 @@ class AccountVerification(CustomApiTestCase):
 
     def test_verification(self):
 
-        self._test_request(method='patch', pk=self.user.id,
-                              updated_fields={'verification_code': '123456', 'is_verified': True, },)
+        self._test_request(method='patch')
 
 
 class RegisterAdmin(CustomApiTestCase):

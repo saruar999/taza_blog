@@ -35,9 +35,9 @@ def create_super_user(sender, **kwargs):
     from core.models.admins import Admins
 
     if not Admins.objects.filter(email='admin@admin.com').exists():
-        superuser = Admins.objects.create_user(email='admin@admin.com', password='123',
-                                               first_name='super', last_name='user',
-                                               gender='M')
+        superuser = Admins.objects.create_superuser(email='admin@admin.com', password='123',
+                                                    first_name='super', last_name='user',
+                                                    gender='M')
         superuser.assign_superuser_group()
 
 

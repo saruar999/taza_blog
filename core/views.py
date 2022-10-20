@@ -20,6 +20,28 @@ class ResponseMixin:
         }
         return res
 
+    @staticmethod
+    def return_404():
+        data = {
+            'success': False,
+            'status_code': status.HTTP_404_NOT_FOUND,
+            'data': {
+                'error': 'not found'
+            }
+        }
+        return Response(data)
+
+    @staticmethod
+    def return_400():
+        data = {
+            'success': False,
+            'status_code': status.HTTP_400_BAD_REQUEST,
+            'data': {
+                'error': 'invalid input'
+            }
+        }
+        return Response(data)
+
 
 class CustomCreateMixin(ResponseMixin, GenericViewSet, CreateModelMixin):
     """
@@ -47,7 +69,7 @@ class CustomRetrieveMixin(ResponseMixin, GenericViewSet, RetrieveModelMixin):
             serializer = self.get_serializer(instance)
             res = Response(serializer.data)
         except Http404:
-            res = Response({'error': 'object not found'}, status=status.HTTP_404_NOT_FOUND)
+            return self.return_404()
 
         return self.get_response(res=res, success=res.status_code == status.HTTP_200_OK)
 
@@ -72,7 +94,10 @@ class CustomUpdateMixin(ResponseMixin, GenericViewSet, UpdateModelMixin):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except Http404:
+            return self.return_404()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
             self.perform_update(serializer)
@@ -95,10 +120,9 @@ class CustomDestroyMixin(ResponseMixin, GenericViewSet, DestroyModelMixin):
             serializer = self.get_serializer(instance)
             self.perform_destroy(instance)
             res = Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+            return self.get_response(res=res, success=res.status_code == status.HTTP_204_NO_CONTENT)
         except Http404:
-            res = Response({'error': 'object not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        return self.get_response(res=res, success=res.status_code == status.HTTP_204_NO_CONTENT)
+            return self.return_404()
 
 
 class CustomModelViewSet(CustomDestroyMixin,

@@ -25,9 +25,7 @@ class RegisterView(CustomCreateMixin):
     def verify_account(self, request, pk=None):
 
         data = request.data
-
         user = self.get_object()
-
         serializer = VerifyEmailSerializer(user, data=data)
 
         serializer.is_valid(raise_exception=True)
@@ -37,9 +35,7 @@ class RegisterView(CustomCreateMixin):
                                      status=status.HTTP_200_OK),
                                      success=True)
         else:
-            return self.get_response(res=Response({'message': 'Verification code is incorrect'},
-                                     status=status.HTTP_400_BAD_REQUEST),
-                                     success=False)
+            return self.return_400()
 
 
 class AdminRegisterView(CustomCreateMixin):

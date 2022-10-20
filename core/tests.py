@@ -31,9 +31,7 @@ class CustomApiTestCase(APITestCase):
             :param method: the api method (post, get, patch, etc...)
             :param headers: headers to be passed with the request
         """
-
         reversed_url = reverse(self.url, kwargs=self.url_kwargs)
-
         test_func_name = '_test_%s' % method
         test_func = getattr(self, test_func_name)
         api_func = getattr(self.client, method)
@@ -55,17 +53,9 @@ class CustomApiTestCase(APITestCase):
     def _test_patch(self, res, **kwargs):
 
         expected_status = kwargs.get('expected_status', status.HTTP_200_OK)
-        pk = kwargs.get('pk', None)
-        updated_fields = kwargs.get('updated_fields', {})
 
         # Checking if object was updated
         self.assertEqual(res.status_code, expected_status)
-
-        # Checking updated values
-        if pk is not None:
-            obj = self.model.objects.get(pk=pk)
-            for key, value in updated_fields.items():
-                self.assertEqual(getattr(obj, key), value)
 
     def _test_post(self, res, **kwargs):
 
@@ -88,6 +78,7 @@ class CustomApiTestCase(APITestCase):
         self._test_request(method=method)
 
     def _test_crud_operation_unauthorized(self, method):
+        self.logout()
         self._test_request(method=method, expected_status=401)
 
     def login(self, email, password):

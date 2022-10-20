@@ -17,10 +17,12 @@ Including another URLconf
 from django.urls import path, include
 from authentication.urls import urlpatterns as auth_urls
 from authorization.urls import urlpatterns as authorization_urls
+from user_management.urls import urlpatterns as user_urls
 
 urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('auth/', include(auth_urls)),
-    path('', include(authorization_urls))
+    path('', include(authorization_urls)),
+    path('', include(user_urls))
 ]
 
