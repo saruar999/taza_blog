@@ -1,10 +1,4 @@
 from django.core.mail import send_mail
-import random
-import string
-
-
-def generate_verification_code(length=6):
-    return ''.join(random.choice(string.digits) for _ in range(length))
 
 
 def custom_send_mail(message,

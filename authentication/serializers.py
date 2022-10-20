@@ -2,7 +2,7 @@ from rest_framework.serializers import ModelSerializer, CharField, ValidationErr
 from core.models.authors import Author
 from core.models.admins import Admins
 from core.models.users import User
-from core.helpers.email import generate_verification_code
+from core.helpers.randoms import generate_verification_code
 
 
 class BaseRegisterSerializer(ModelSerializer):

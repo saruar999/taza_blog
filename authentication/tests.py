@@ -1,7 +1,6 @@
 from core.tests import CustomApiTestCase
 from core.models.authors import Author
 from core.models.admins import Admins
-from core.models.users import User
 from rest_framework import status
 
 
@@ -22,21 +21,21 @@ class SelfRegister(CustomApiTestCase):
 
     def test_success(self):
 
-        super()._test_request(method='post')
+        self._test_request(method='post')
 
         from django.db.models.signals import post_save
-        super()._test_signal(signal=post_save)
+        self._test_signal(signal=post_save)
 
     def test_unmatching_passwords(self):
         self.request_body.update({'confirm_password': '1234'})
 
-        super()._test_request(method='post', expected_status=status.HTTP_400_BAD_REQUEST, expected_count=0)
+        self._test_request(method='post', expected_status=status.HTTP_400_BAD_REQUEST, expected_count=0)
 
     def test_duplicate_email(self):
 
-        super()._test_request(method='post')
+        self._test_request(method='post')
 
-        super()._test_request(method='post',
+        self._test_request(method='post',
                               expected_status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -59,7 +58,7 @@ class AccountVerification(CustomApiTestCase):
 
     def test_verification(self):
 
-        super()._test_request(method='patch', pk=self.user.id,
+        self._test_request(method='patch', pk=self.user.id,
                               updated_fields={'verification_code': '123456', 'is_verified': True, },)
 
 
@@ -77,29 +76,16 @@ class RegisterAdmin(CustomApiTestCase):
     }
 
     def tearDown(self) -> None:
-        super().logout()
+        self.logout()
 
     def test_register_unauthorized(self):
-        super()._test_request(method='post', expected_status=status.HTTP_401_UNAUTHORIZED)
+        self._test_request(method='post', expected_status=status.HTTP_401_UNAUTHORIZED)
 
     def test_register_as_superuser(self):
-        super().login_superuser()
-        super()._test_request(method='post', expected_status=status.HTTP_201_CREATED, expected_count=2)
+        self.login_superuser()
+        self._test_request(method='post', expected_status=status.HTTP_201_CREATED, expected_count=2)
 
 
-class LoginUser(CustomApiTestCase):
-
-    url = 'login'
-    model = User
-
-    request_body = {
-        'email': 'admin@admin.com',
-        'password': '123'
-    }
-
-    # def test_superuser_login(self):
-    #     super()._test_request(method='post', expected_status=status.HTTP_200_OK)
-    #
 
 
 
