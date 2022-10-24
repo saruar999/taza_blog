@@ -7,6 +7,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 from rest_framework.response import Response
 from django.http import Http404
+from rest_framework.serializers import ValidationError
 
 
 class ResponseMixin:
@@ -32,24 +33,51 @@ class ResponseMixin:
         return Response(data)
 
     @staticmethod
-    def return_400():
+    def return_400(data=None):
         data = {
             'success': False,
             'status_code': status.HTTP_400_BAD_REQUEST,
             'data': {
-                'error': 'invalid input'
+                'error': data.detail if data is not None else 'invalid input'
             }
         }
         return Response(data)
 
 
-class CustomCreateMixin(ResponseMixin, GenericViewSet, CreateModelMixin):
+class CustomGenericViewset(GenericViewSet, ResponseMixin):
+
+    error_res = None
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Http404:
+            self.error_res = self.return_404()
+
+    def return_extra_action(self, serializer):
+        res = Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_response(res=res, success=True)
+
+    def serialize_extra_action(self, serializer, message=None):
+        serializer.is_valid(raise_exception=True)
+        data = serializer.save()
+        if not isinstance(data, ValidationError):
+            res = Response(serializer.data, status=status.HTTP_200_OK)
+            if message is not None:
+                res.data = {'status': message}
+            return self.get_response(res=res, success=True)
+        else:
+            return self.return_400(data)
+
+
+class CustomCreateMixin(CustomGenericViewset, CreateModelMixin):
     """
         Overriding the default CreateModelMixin to unify the response structure with get_response of BaseView
     """
 
     def create(self, request, serializer=None, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data) if serializer is None else serializer
+        serializer = self.get_serializer(data=request.data) \
+            if serializer is None else serializer
         if serializer.is_valid():
             self.perform_create(serializer)
             res = Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -60,21 +88,20 @@ class CustomCreateMixin(ResponseMixin, GenericViewSet, CreateModelMixin):
                                  success=res.status_code == status.HTTP_201_CREATED)
 
 
-class CustomRetrieveMixin(ResponseMixin, GenericViewSet, RetrieveModelMixin):
+class CustomRetrieveMixin(CustomGenericViewset, RetrieveModelMixin):
 
     def retrieve(self, request, *args, **kwargs):
 
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            res = Response(serializer.data)
-        except Http404:
-            return self.return_404()
+        instance = self.get_object()
+        if self.error_res is not None:
+            return self.error_res
+        serializer = self.get_serializer(instance)
+        res = Response(serializer.data)
 
         return self.get_response(res=res, success=res.status_code == status.HTTP_200_OK)
 
 
-class CustomListMixin(ResponseMixin, GenericViewSet, ListModelMixin):
+class CustomListMixin(CustomGenericViewset, ListModelMixin):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -90,14 +117,15 @@ class CustomListMixin(ResponseMixin, GenericViewSet, ListModelMixin):
         return self.get_response(res=res, success=res.status_code == status.HTTP_200_OK)
 
 
-class CustomUpdateMixin(ResponseMixin, GenericViewSet, UpdateModelMixin):
+class CustomUpdateMixin(CustomGenericViewset, UpdateModelMixin):
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
-        try:
-            instance = self.get_object()
-        except Http404:
-            return self.return_404()
+
+        instance = self.get_object()
+        if self.error_res is not None:
+            return self.error_res
+
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if serializer.is_valid():
             self.perform_update(serializer)
@@ -112,14 +140,16 @@ class CustomUpdateMixin(ResponseMixin, GenericViewSet, UpdateModelMixin):
         return self.get_response(res=res, success=res.status_code == status.HTTP_200_OK)
 
 
-class CustomDestroyMixin(ResponseMixin, GenericViewSet, DestroyModelMixin):
+class CustomDestroyMixin(CustomGenericViewset, DestroyModelMixin):
 
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = self.get_serializer(instance)
+            if self.error_res is not None:
+                return self.error_res
+
             self.perform_destroy(instance)
-            res = Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+            res = Response("entry has been deleted", status=status.HTTP_204_NO_CONTENT)
             return self.get_response(res=res, success=res.status_code == status.HTTP_204_NO_CONTENT)
         except Http404:
             return self.return_404()

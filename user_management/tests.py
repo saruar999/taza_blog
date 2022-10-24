@@ -71,6 +71,84 @@ class AdminDetailTestCase(CustomApiTestCase, DetailsTestCaseMixin):
         pass
 
 
+class AdminExtraActionsTestCase(CustomApiTestCase):
+    model = Admins
+    permission_list = ['change_admins']
+    user = None
+
+    def setUp(self) -> None:
+        obj = self.model.objects.create_admin(email='test@admin.com',
+                                              password='123',
+                                              first_name='test',
+                                              last_name='testuser',
+                                              gender='M')
+        self.url_kwargs = {'pk': obj.id}
+        self.user = obj
+
+    def test_change_password(self):
+        self.request_body = {
+            'password': '123',
+            'new_password': '456',
+            'confirm_new_password': '456'
+        }
+        self.url = 'admins-change-password'
+
+        self.login_with_permissions(custom_user=self.user)
+        self._test_request(method='patch')
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.request_body['new_password']))
+
+    def test_assign_roles_to_admin(self):
+        self.request_body = {
+            'roles': ['moderator']
+        }
+        self.url = 'admins-assign-roles'
+
+        self.login_with_permissions()
+        self._test_request(method='patch')
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_staff)
+
+    def test_remove_roles_from_admin(self):
+        self.request_body = {
+            'roles': ['moderator']
+        }
+        self.url = 'admins-remove-roles'
+
+        self.login_with_permissions()
+        self._test_request(method='patch')
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_staff)
+
+
+class AuthorExtraActionsTestCase(CustomApiTestCase):
+    model = Author
+    permission_list = ['change_author']
+    user = None
+
+    def setUp(self) -> None:
+        obj = self.model.objects.create_admin(email='test@admin.com',
+                                              password='123',
+                                              first_name='test',
+                                              last_name='testuser',
+                                              gender='M')
+        self.url_kwargs = {'pk': obj.id}
+        self.user = obj
+
+    def test_change_password(self):
+        self.request_body = {
+            'password': '123',
+            'new_password': '456',
+            'confirm_new_password': '456'
+        }
+        self.url = 'users-change-password'
+
+        self.login_with_permissions(custom_user=self.user)
+        self._test_request(method='patch')
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(self.request_body['new_password']))
+
+
 
 #   TODO: try this
 #   @classmethod

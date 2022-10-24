@@ -22,6 +22,10 @@ class CustomApiTestCase(APITestCase):
     LAST_NAME = 'test'
     GENDER = 'M'
 
+    # SUPERUSER
+    SUPER_EMAIL = 'admin@admin.com'
+    SUPER_PASSWORD = '123'
+
     def _test_request(self, method, **kwargs):
         """
             custom function that makes a request to the given url, body and method,
@@ -98,16 +102,17 @@ class CustomApiTestCase(APITestCase):
                                                      first_name=self.FIRST_NAME, last_name=self.LAST_NAME,
                                                      gender=self.GENDER)
 
-    def login_with_permissions(self):
+    def login_with_permissions(self, custom_user=None, custom_password=None):
 
         permissions = Permission.objects.filter(codename__in=self.permission_list)
 
-        user = self.get_temp_user()
+        user = custom_user if custom_user is not None else self.get_temp_user()
         [user.user_permissions.add(permission) for permission in permissions]
-        self.login(email=self.EMAIL, password=self.PASSWORD)
+        self.login(email=user.email,
+                   password=custom_password if custom_password is not None else self.PASSWORD)
 
     def login_superuser(self):
-        self.login(email="admin@admin.com", password="123")
+        self.login(email=self.SUPER_EMAIL, password=self.SUPER_PASSWORD)
 
     def logout(self):
         if self.headers.get('HTTP_AUTHORIZATION'):

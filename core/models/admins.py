@@ -15,3 +15,7 @@ class Admins(User):
         self.assign_group(name='superuser')
 
 
+    @staticmethod
+    def return_classified_user_from_request_user(user):
+        admin = Admins.objects.get(pk=user.id)
+        return admin

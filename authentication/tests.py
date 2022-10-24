@@ -71,7 +71,8 @@ class RegisterAdmin(CustomApiTestCase):
         "password": "123",
         "first_name": "test",
         "last_name": "user",
-        "gender": "M"
+        "gender": "M",
+        "roles": ["moderator"]
     }
 
     def tearDown(self) -> None:

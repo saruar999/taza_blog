@@ -1,20 +1,18 @@
 from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import DjangoModelPermissions
 from rest_framework import status
-from rest_framework.serializers import ValidationError
-
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.models.admins import Admins
 from core.models.authors import Author
 from core.views import CustomCreateMixin, ResponseMixin
+from core.permissions import DjangoModelPermissions
 
 from .serializers import RegisterSerializer, VerifyEmailSerializer, AdminRegisterSerializer
 
 
 class RegisterView(CustomCreateMixin):
 
+    authentication_classes = []
     serializer_class = RegisterSerializer
     queryset = Author.objects.all()
 
@@ -26,16 +24,13 @@ class RegisterView(CustomCreateMixin):
 
         data = request.data
         user = self.get_object()
+
+        if self.error_res is not None:
+            return self.error_res
+
         serializer = VerifyEmailSerializer(user, data=data)
 
-        serializer.is_valid(raise_exception=True)
-        data = serializer.save()
-        if not isinstance(data, ValidationError):
-            return self.get_response(res=Response({'message': 'User has been verified'},
-                                     status=status.HTTP_200_OK),
-                                     success=True)
-        else:
-            return self.return_400()
+        return self.serialize_extra_action(serializer=serializer, message='verification successful')
 
 
 class AdminRegisterView(CustomCreateMixin):

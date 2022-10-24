@@ -1,8 +1,13 @@
-from rest_framework.serializers import ModelSerializer, CharField, ValidationError, Serializer
+from rest_framework.serializers import ModelSerializer, \
+    CharField, \
+    ValidationError, \
+    Serializer, \
+    ListSerializer
 from core.models.authors import Author
 from core.models.admins import Admins
 from core.models.users import User
 from core.helpers.randoms import generate_verification_code
+from django.contrib.auth.models import Group
 
 
 class BaseRegisterSerializer(ModelSerializer):
@@ -27,12 +32,9 @@ class BaseRegisterSerializer(ModelSerializer):
         email = attrs['email']
 
         if Author.objects.filter(email=email).exists():
-            return self._raise_validation_error('user with this email already exists')
+            return ValidationError('user with this email already exists')
 
         return attrs
-
-    def _raise_validation_error(self, error):
-        raise ValidationError({'error': error})
 
     def _create(self, validated_data, **extra_fields):
 
@@ -66,7 +68,7 @@ class RegisterSerializer(BaseRegisterSerializer):
         confirm_password = attrs['confirm_password']
 
         if confirm_password != password:
-            return self._raise_validation_error('passwords do not match')
+            raise ValidationError({'password': 'passwords do not match'})
 
         return attrs
 
@@ -76,12 +78,26 @@ class RegisterSerializer(BaseRegisterSerializer):
 
 
 class AdminRegisterSerializer(BaseRegisterSerializer):
+    roles = ListSerializer(child=CharField(), min_length=1, write_only=True)
 
     class Meta(BaseRegisterSerializer.Meta):
         model = Admins
+        fields = ['email', 'password', 'first_name', 'last_name', 'gender', 'roles']
 
     def create(self, validated_data):
-        return self._create(validated_data)
+        roles = validated_data.pop('roles')
+
+        instance = self._create(validated_data)
+
+        for role in roles:
+            try:
+                group = Group.objects.get(name__iexact=role)
+                instance.groups.add(group)
+            except Group.DoesNotExist:
+                return ValidationError('role does not exist')
+
+        instance.save()
+        return instance
 
 
 class VerifyEmailSerializer(Serializer):
@@ -98,11 +114,13 @@ class VerifyEmailSerializer(Serializer):
         return instance
 
     def update(self, instance, validated_data):
+        if instance.is_verified:
+            return ValidationError('User already verified')
         code = validated_data.get('verification_code')
         if instance.verification_code == code:
             return self.verify_user(instance)
         else:
-            return ValidationError({'error': 'incorrect verification code'})
+            return ValidationError('incorrect verification code')
 
     def create(self, validated_data):
         pass

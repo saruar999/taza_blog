@@ -1,5 +1,5 @@
 from core.views import CustomModelViewSet
-from rest_framework.permissions import DjangoModelPermissions
+from core.permissions import DjangoModelPermissions
 from .serializers import GroupSerializer, PermissionSerializer
 
 

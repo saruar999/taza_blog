@@ -117,7 +117,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return '%s %s' % (self.first_name, self.last_name)
 
     def send_verification_email(self):
-
         message = 'verification code for user: %s\n\nyour verification code is: \n%s' % (self.id, self.verification_code)
         subject = 'Verification Code'
         recipient_list = [self.email]
@@ -131,3 +130,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         if not self.groups.filter(name=_group.name).exists():
             self.groups.add(_group)
 
+    @property
+    def is_moderator(self):
+        return self.groups.filter(name="moderator").exists()
