@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from rest_framework import status
 from unittest.mock import MagicMock
-from core.models import User
+from core.models import User, Author
 from django.contrib.auth.models import Permission
 
 
@@ -14,6 +14,8 @@ class CustomApiTestCase(APITestCase):
     url_kwargs = {}
     headers = {}
     permission_list = []
+    test_as_admin = False
+    reversed_url = None
 
     # TEMP USER
     EMAIL = 'temp@test.com'
@@ -35,11 +37,19 @@ class CustomApiTestCase(APITestCase):
             :param method: the api method (post, get, patch, etc...)
             :param headers: headers to be passed with the request
         """
-        reversed_url = reverse(self.url, kwargs=self.url_kwargs)
+        reversed_url = self.reversed_url if self.reversed_url is not None \
+            else reverse(self.url, kwargs=self.url_kwargs)
         test_func_name = '_test_%s' % method
         test_func = getattr(self, test_func_name)
         api_func = getattr(self.client, method)
-        res = api_func(reversed_url, self.request_body, **self.headers)
+        if method in ['get', 'delete']:
+            res = api_func(reversed_url, **self.headers)
+        else:
+            res = api_func(reversed_url, self.request_body, **self.headers)
+
+        if res.status_code == 405:
+            print(reversed_url)
+
         test_func(res=res, **kwargs)
         return res
 
@@ -50,6 +60,8 @@ class CustomApiTestCase(APITestCase):
         self.assertEqual(res.status_code, expected_status)
 
     def _test_get(self, res, **kwargs):
+        if res.status_code == 400:
+            print(res.data)
 
         expected_status = kwargs.get('expected_status', status.HTTP_200_OK)
         self.assertEqual(res.status_code, expected_status)
@@ -102,12 +114,25 @@ class CustomApiTestCase(APITestCase):
                                                      first_name=self.FIRST_NAME, last_name=self.LAST_NAME,
                                                      gender=self.GENDER)
 
+    def get_temp_author(self):
+        if User.objects.filter(email=self.EMAIL).exists():
+            return Author.objects.get(email=self.EMAIL)
+        else:
+            return Author.objects.create_verified_user(email=self.EMAIL, password=self.PASSWORD,
+                                                     first_name=self.FIRST_NAME, last_name=self.LAST_NAME,
+                                                     gender=self.GENDER)
+
     def login_with_permissions(self, custom_user=None, custom_password=None):
 
         permissions = Permission.objects.filter(codename__in=self.permission_list)
 
         user = custom_user if custom_user is not None else self.get_temp_user()
+
+        if self.test_as_admin:
+            user.is_staff = True
+
         [user.user_permissions.add(permission) for permission in permissions]
+        user.save()
         self.login(email=user.email,
                    password=custom_password if custom_password is not None else self.PASSWORD)
 

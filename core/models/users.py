@@ -116,6 +116,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def full_name(self):
         return '%s %s' % (self.first_name, self.last_name)
 
+    def clasify_user(self):
+        if self.is_staff:
+            return 'admin'
+        elif self.is_verified:
+            return 'author'
+        else:
+            return 'anon'
+
     def send_verification_email(self):
         message = 'verification code for user: %s\n\nyour verification code is: \n%s' % (self.id, self.verification_code)
         subject = 'Verification Code'

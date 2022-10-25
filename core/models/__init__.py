@@ -8,5 +8,5 @@ from .admins import Admins
 
 
 __all__ = ('User', 'BaseModel', 'Posts',
-           'Tags', 'Author', 'AuthorFavoritePosts',
+           'Tags', 'Author', 'AuthorFavoritePosts', 'Comments',
            'Admins')

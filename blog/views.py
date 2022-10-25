@@ -1,20 +1,18 @@
 from core.views import CustomModelViewSet
-from core.permissions import DjangoModelPermissions
+from core.permissions import DjangoModelPermissions, DjangoModelPermissionsOrAnonReadOnly, IsAuthor
 from core.paginations import StandardResultsSetPagination
 from .permissions import CanUpdateDeletePost
 from .serializers import PostsSerializer, CommentSerializer, LikePostSerializer, FavoritePostSerializer
-from .filters import PostsFilter
+from .filters import PostsFilter, AdminPostsFilter, CustomFilterBackend
 
 from rest_framework.decorators import action
-from django_filters.rest_framework import DjangoFilterBackend
 
 
 class PostViewSet(CustomModelViewSet):
+    queryset = PostsSerializer.Meta.model.objects.all().prefetch_related('tags', 'post_author', 'comments')
     serializer_class = PostsSerializer
-    queryset = PostsSerializer.Meta.model.objects.all().prefetch_related('tags')
-    permission_classes = (DjangoModelPermissions, CanUpdateDeletePost)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = PostsFilter
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, CanUpdateDeletePost)
+    filter_backends = (CustomFilterBackend,)
     pagination_class = StandardResultsSetPagination
 
     def retrieve(self, request, *args, **kwargs):
@@ -29,7 +27,8 @@ class PostViewSet(CustomModelViewSet):
     @action(methods=['post'],
             url_path='like_post',
             url_name='like-post',
-            detail=True)
+            detail=True,
+            permission_classes=(DjangoModelPermissions, IsAuthor,))
     def like_post(self, request, pk=None):
         post = self.get_object()
         if self.error_res is not None:
@@ -41,7 +40,8 @@ class PostViewSet(CustomModelViewSet):
     @action(methods=['post'],
             url_path='favorite_post',
             url_name='favorite-post',
-            detail=True)
+            detail=True,
+            permission_classes=(DjangoModelPermissions, IsAuthor,))
     def favorite_post(self, request, pk=None):
         post = self.get_object()
         if self.error_res is not None:
@@ -54,7 +54,7 @@ class PostViewSet(CustomModelViewSet):
 class CommentViewSet(CustomModelViewSet):
 
     serializer_class = CommentSerializer
-    permission_classes = (DjangoModelPermissions,)
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
 
     def get_queryset(self):
         post_id = self.kwargs.get('pid')

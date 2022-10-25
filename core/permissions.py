@@ -1,4 +1,6 @@
-from rest_framework.permissions import BasePermission, DjangoModelPermissions as RestModelPermissions
+from rest_framework.permissions import BasePermission, DjangoModelPermissions as RestModelPermissions, \
+    DjangoModelPermissionsOrAnonReadOnly
+from core.models import Author
 
 
 class DjangoModelPermissions(RestModelPermissions):
@@ -33,3 +35,9 @@ class IsUser(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.id == request.user.id or request.user.is_superuser
+
+
+class IsAuthor(BasePermission):
+
+    def has_permission(self, request, view):
+        return Author.verified_users.filter(pk=request.user.id).exists()

@@ -33,7 +33,7 @@ class Posts(BaseModel):
                                             help_text="tags of the post")
 
     def __str__(self):
-        return str(self.id) + " - " + self.body
+        return str(self.id) + " - " + self.title
 
     def add_tags(self, tags):
         for tag in tags:

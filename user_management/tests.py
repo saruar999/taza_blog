@@ -8,6 +8,8 @@ class UserListTestCase(CustomApiTestCase, ListTestCaseMixin):
     url = 'users-list'
     model = Author
     permission_list = ['view_author', 'change_author']
+    test_as_admin = True
+
 
     def test_create_authorized(self):
         pass
@@ -22,6 +24,7 @@ class UserDetailTestCase(CustomApiTestCase, DetailsTestCaseMixin):
         'first_name': generate_random_string(5),
         'last_name': generate_random_string(5),
     }
+    test_as_admin = True
 
     def setUp(self) -> None:
         obj = self.model.objects.create_verified_user(email='test@tesst.com',
@@ -92,6 +95,7 @@ class AdminExtraActionsTestCase(CustomApiTestCase):
             'confirm_new_password': '456'
         }
         self.url = 'admins-change-password'
+        self.url_kwargs = {}
 
         self.login_with_permissions(custom_user=self.user)
         self._test_request(method='patch')
@@ -142,6 +146,7 @@ class AuthorExtraActionsTestCase(CustomApiTestCase):
             'confirm_new_password': '456'
         }
         self.url = 'users-change-password'
+        self.url_kwargs = {}
 
         self.login_with_permissions(custom_user=self.user)
         self._test_request(method='patch')

@@ -106,7 +106,6 @@ class PostsSerializer(serializers.ModelSerializer):
         instance.post_author = user
         instance.save()
         instance.add_tags(tags)
-
         return instance
 
     def update(self, instance, validated_data):
