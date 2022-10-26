@@ -1,4 +1,4 @@
-from core.views import CustomModelViewSet
+from core.views import CustomModelViewSet, CustomListMixin
 from core.permissions import DjangoModelPermissions
 from .serializers import GroupSerializer, PermissionSerializer
 
@@ -10,7 +10,7 @@ class GroupViewSet(CustomModelViewSet):
     queryset = GroupSerializer.Meta.model.objects.all()
 
 
-class PermissionViewSet(CustomModelViewSet):
+class PermissionViewSet(CustomListMixin):
 
     permission_classes = (DjangoModelPermissions,)
     serializer_class = PermissionSerializer
